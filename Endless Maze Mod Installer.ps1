@@ -114,6 +114,9 @@ try {
         return $null
     }
 ""
+"Some mods may conflit with each other. A mod may override changes another mod made"
+"This can be prevented by choosing the order you install mods."
+""
 "List of mods:"
 
 # Check if content is retrieved successfully
