@@ -101,7 +101,7 @@ function Download-GitHubFolder {
 }
 
 # URL of GitHub .txt file
-$url = "https://raw.githubusercontent.com/ItsTeraBytes/Endless-maze-mods/main/Mods.txt"
+$url = "https://raw.githubusercontent.com/ItsTeraBytes/Endless-Maze-Mods/main/Mods.txt"
 
 # Read text from the GitHub
 try {
