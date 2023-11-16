@@ -1,1 +1,3 @@
 FullBright
+No Beep
+No Music
