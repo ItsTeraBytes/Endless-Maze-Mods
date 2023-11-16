@@ -41,7 +41,7 @@ if (-not(Test-Path $Game_Path'\installed_mods_do-not-modify.txt' -PathType Leaf)
 function Download-GitHubFolder {
     param (
         [string]$Username = "ItsTeraBytes",
-        [string]$Repository = "Endless-maze-mods",
+        [string]$Repository = "Endless-Maze-Mods",
         [string]$Branch = "main",
         [string]$Folder = "",
         [string]$Destination = "."
