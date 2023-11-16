@@ -1,6 +1,6 @@
-Write-Host "Endless Maze Mod Installer DEV 1.0" -ForegroundColor Cyan
+Write-Host "Endless Maze Mod Installer 1.0" -ForegroundColor Cyan
 Write-Host "This script will install and uninstall mods for you in the game endless maze" -ForegroundColor Gray
-Write-Host "Endless Maze can be found on steam" -ForegroundColor Gray
+Write-Host "Endless Maze can be found on steam: https://store.steampowered.com/app/2663270/Endless_Maze/" -ForegroundColor Gray
 Write-Host "Mods will only work in Windows!" -ForegroundColor Red
 ""
 
@@ -100,28 +100,21 @@ function Download-GitHubFolder {
     ""
 }
 
-# Read .txt from a GitHub to get list of mods
-function Read-TextFromUrl($url) {
-    try {
-        $webClient = New-Object System.Net.WebClient
-        $content = $webClient.DownloadString($url)
-        return $content
-    }
-    catch {
+# URL of GitHub .txt file
+$url = "https://raw.githubusercontent.com/ItsTeraBytes/Endless-maze-mods/main/Mods.txt"
+
+# Read text from the GitHub
+try {
+	$fileContent = Invoke-RestMethod -Uri $url
+	}
+	catch {
 		Clear
         Write-Host "Abort! Unable to retrieve mod files! Please make sure you have an internet connection, or GitHub is down..." -ForegroundColor Red
 		pause
         return $null
     }
-}
 ""
 "List of mods:"
-
-# URL of GitHub .txt file
-$url = "https://raw.githubusercontent.com/ItsTeraBytes/Endless-maze-mods/main/Mods.txt"
-
-# Read text from the GitHub
-$fileContent = Read-TextFromUrl $url
 
 # Check if content is retrieved successfully
 if ($fileContent -ne $null) {
