@@ -23,17 +23,17 @@ if (Test-Path $Game_Path -PathType Container)
 }
 
 # Check if .txt file exist and if not, create one
-if (-not(Test-Path $Game_Path'\installed_mods_do-not-delete.txt' -PathType Leaf))
+if (-not(Test-Path $Game_Path'\installed_mods_do-not-modify.txt' -PathType Leaf))
 {
 	""
-	Write-Host "This is the first time you ran this installer" -ForegroundColor Gray
+	Write-Host "It looks like this is the first time you ran this installer" -ForegroundColor Gray
 	Write-Host "Creating installed_mods_do-not-modify.txt" -ForegroundColor Gray
 	Write-Host "This file is used to track what mods you have installed" -ForegroundColor Gray
 	""
 	Write-Host "Do not delete/modify this file, it will break things, this file will not be big anyway" -ForegroundColor Red
 	Write-Host "If you deleted/modify this file, reinstall Endless Maze" -ForegroundColor Red
 	pause
-	New-Item -Path 	$Game_Path'\installed_mods_do-not-delete.txt' -ItemType File
+	New-Item -Path 	$Game_Path'\installed_mods_do-not-modify.txt' -ItemType File
 	Clear
 }
 
@@ -153,7 +153,7 @@ if ($fileContent -ne $null) {
             $selectedItem = $lines[$userInput - 1]
 			""
             Write-Host "Enter (yes) to confirm" -ForegroundColor Blue
-            if (Get-Content $Game_Path'\installed_mods_do-not-delete.txt' | Select-String -Pattern $selectedItem) {
+            if (Get-Content $Game_Path'\installed_mods_do-not-modify.txt' | Select-String -Pattern $selectedItem) {
                 $confirmation = Read-Host "Uninstall mod $selectedItem"
                 if ($confirmation -eq 'yes') {
 					""
@@ -162,8 +162,12 @@ if ($fileContent -ne $null) {
                     Write-Host "Downloading game file(s)..." -ForegroundColor Gray
 
                     Download-GitHubFolder -Branch "main" -Folder "Default/$selectedItem" -Destination $Game_Path
+					
+					$old_txt = Get-Content -Path $Game_Path'\installed_mods_do-not-modify.txt'
 
-                    # Work in progress
+					# Read and remove mod name from list
+					$new_txt = $old_txt | Where-Object { $_ -ne $selectedItem }
+					Set-Content -Path $Game_Path'\installed_mods_do-not-modify.txt' -Value $new_txt
 					pause
                 }
             } else {
@@ -176,7 +180,8 @@ if ($fileContent -ne $null) {
 
                     Download-GitHubFolder -Branch "main" -Folder "Mods/$selectedItem" -Destination $Game_Path
 
-                    Add-Content -Path $Game_Path'\installed_mods_do-not-delete.txt' -Value $selectedItem
+					# Read and remove mod name from list
+                    Add-Content -Path $Game_Path'\installed_mods_do-not-modify.txt' -Value $selectedItem
 					pause
                 }
             }
