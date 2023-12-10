@@ -14,7 +14,7 @@ $steam_dir_url = "https://raw.githubusercontent.com/ItsTeraBytes/Endless-Maze-Mo
 # Read text from the GitHub
 try {
 	$fileContent = Invoke-RestMethod -Uri $url
-	$steam_directory = Invoke-RestMethod -Uri $steam_dir_url
+	$steam_directory = (Invoke-RestMethod -Uri $steam_dir_url) + '\win64'
 	}
 	catch {
 		Clear
@@ -49,7 +49,7 @@ if (-not(Test-Path $Game_Path'\installed_mods_do-not-modify.txt' -PathType Leaf)
 	Write-Host "Do not delete/modify this file, it will break things, this file will not be big anyway" -ForegroundColor Red
 	Write-Host "If you deleted/modify this file, reinstall Endless Maze" -ForegroundColor Red
 	pause
-	New-Item -Path 	$Game_Path'\installed_mods_do-not-modify.txt' -ItemType File
+	New-Item -Path $Game_Path'\installed_mods_do-not-modify.txt' -ItemType File
 	Clear
 }
 
@@ -60,8 +60,7 @@ function Download-GitHubFolder {
         [string]$Repository = "Endless-Maze-Mods",
         [string]$Branch = "main",
         [string]$Folder = "",
-        [string]$Destination = ".",
-        [string]$ZipFileName = "DownloadedFiles.zip"
+        [string]$Destination = "."
     )
 
     $ApiUrl = "https://api.github.com/repos/$Username/$Repository/contents"
@@ -74,14 +73,27 @@ function Download-GitHubFolder {
     # Add the branch name to the API URL
     $ApiUrl += "?ref=$Branch"
 
-    function Add-ToZip {
+    function Update-Zip {
         param (
-            [string]$FilePath,
-            [string]$ZipPath
+            [string]$FolderPath
         )
+		
+		$ZipPath = $FolderPath + '\package.zip'
+		$NWPath = $FolderPath + '\package.nw'
+		$TempPath = $FolderPath + '\TEMP'
+		$extractedFolderPath = $FolderPath + 'ZipTEMP'
+		
+		Rename-Item -Path $NWPath -NewName 'package.zip'
 
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::CreateFromDirectory($FilePath, $ZipPath)
+		Expand-Archive -Path $ZipPath -DestinationPath $extractedFolderPath -Force
+		
+		Copy-Item -Path "$TempPath\*" -Destination "$extractedFolderPath\*" -Recurse -Force
+		
+		Compress-Archive -Path "$extractedFolderPath\*" -DestinationPath $ZipPath -Force
+
+		Rename-Item -Path $ZipPath -NewName 'package.nw'
+		
+		Remove-Item $TempPath
     }
 
     function Download-File {
@@ -121,13 +133,12 @@ function Download-GitHubFolder {
     }
 
     # Download the specified folder
-    Download-Folder -Url $ApiUrl -OutputPath $Destination
+    Download-Folder -Url $ApiUrl -OutputPath $Destination'\TEMP'
 
-    # Add downloaded files to the specified zip file
-    Add-ToZip -FilePath $Destination -ZipPath $ZipFileName
+    # Update the existing zip file with the downloaded files
+    Update-Zip -FolderPath $Destination
 
-    Write-Host "Download and zip completed." -ForegroundColor Green
-    ""
+    Write-Host "Download and zip update completed." -ForegroundColor Green
 }
 
 ""
@@ -174,7 +185,7 @@ if ($fileContent -ne $null) {
                     ""
                     Write-Host "Downloading game file(s)..." -ForegroundColor Gray
 
-                    Download-GitHubFolder -Branch "main" -Folder "Default/$selectedItem" -Destination $Game_Path -ZipFileName $steam_directory
+                    Download-GitHubFolder -Branch "main" -Folder "Default/$selectedItem" -Destination $Game_Path
 					
 					$old_txt = Get-Content -Path $Game_Path'\installed_mods_do-not-modify.txt'
 
@@ -191,7 +202,7 @@ if ($fileContent -ne $null) {
                     ""
                     Write-Host "Downloading mod file(s)..." -ForegroundColor Gray
 
-                    Download-GitHubFolder -Branch "main" -Folder "Mods/$selectedItem" -Destination $Game_Path -ZipFileName $steam_directory
+                    Download-GitHubFolder -Branch "main" -Folder "Mods/$selectedItem" -Destination $Game_Path
 
 					# Read and remove mod name from list
                     Add-Content -Path $Game_Path'\installed_mods_do-not-modify.txt' -Value $selectedItem
