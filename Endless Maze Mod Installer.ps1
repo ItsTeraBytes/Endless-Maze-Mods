@@ -1,4 +1,4 @@
-Write-Host "Endless Maze Mod Installer 1.0" -ForegroundColor Cyan
+Write-Host "Endless Maze Mod Installer 1.1" -ForegroundColor Cyan
 Write-Host "This script will install and uninstall mods for you in the game endless maze" -ForegroundColor Gray
 Write-Host "Endless Maze can be found on steam: https://store.steampowered.com/app/2663270/Endless_Maze/" -ForegroundColor Gray
 Write-Host "Mods will only work in Windows!" -ForegroundColor Red
@@ -7,7 +7,23 @@ Write-Host "Mods will only work in Windows!" -ForegroundColor Red
 pause
 Clear
 
-$Game_Path = 'C:\Program Files (x86)\Steam\steamapps\common\EndlessMazex64\windows64\x64'
+# URL of GitHub .txt file
+$url = "https://raw.githubusercontent.com/ItsTeraBytes/Endless-Maze-Mods/main/Mods.txt"
+$steam_dir_url = "https://raw.githubusercontent.com/ItsTeraBytes/Endless-Maze-Mods/main/steam_directory.txt"
+
+# Read text from the GitHub
+try {
+	$fileContent = Invoke-RestMethod -Uri $url
+	$steam_directory = Invoke-RestMethod -Uri $steam_dir_url
+	}
+	catch {
+		Clear
+        Write-Host "Abort! Unable to retrieve mod files! Please make sure you have an internet connection, or GitHub is down..." -ForegroundColor Red
+		pause
+        return $null
+    }
+
+$Game_Path = 'C:\Program Files (x86)\Steam\steamapps\common\' + $steam_directory
 
 # Identity game files and ask user when it's missing from the normal steam directory
 if (Test-Path $Game_Path -PathType Container)
@@ -44,7 +60,8 @@ function Download-GitHubFolder {
         [string]$Repository = "Endless-Maze-Mods",
         [string]$Branch = "main",
         [string]$Folder = "",
-        [string]$Destination = "."
+        [string]$Destination = ".",
+        [string]$ZipFileName = "DownloadedFiles.zip"
     )
 
     $ApiUrl = "https://api.github.com/repos/$Username/$Repository/contents"
@@ -56,6 +73,16 @@ function Download-GitHubFolder {
 
     # Add the branch name to the API URL
     $ApiUrl += "?ref=$Branch"
+
+    function Add-ToZip {
+        param (
+            [string]$FilePath,
+            [string]$ZipPath
+        )
+
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($FilePath, $ZipPath)
+    }
 
     function Download-File {
         param (
@@ -96,23 +123,13 @@ function Download-GitHubFolder {
     # Download the specified folder
     Download-Folder -Url $ApiUrl -OutputPath $Destination
 
-    Write-Host "Download completed." -ForegroundColor Green
+    # Add downloaded files to the specified zip file
+    Add-ToZip -FilePath $Destination -ZipPath $ZipFileName
+
+    Write-Host "Download and zip completed." -ForegroundColor Green
     ""
 }
 
-# URL of GitHub .txt file
-$url = "https://raw.githubusercontent.com/ItsTeraBytes/Endless-Maze-Mods/main/Mods.txt"
-
-# Read text from the GitHub
-try {
-	$fileContent = Invoke-RestMethod -Uri $url
-	}
-	catch {
-		Clear
-        Write-Host "Abort! Unable to retrieve mod files! Please make sure you have an internet connection, or GitHub is down..." -ForegroundColor Red
-		pause
-        return $null
-    }
 ""
 "Some mods may conflit with each other. A mod may override changes another mod made"
 "This can be prevented by choosing the order you install mods."
@@ -157,7 +174,7 @@ if ($fileContent -ne $null) {
                     ""
                     Write-Host "Downloading game file(s)..." -ForegroundColor Gray
 
-                    Download-GitHubFolder -Branch "main" -Folder "Default/$selectedItem" -Destination $Game_Path
+                    Download-GitHubFolder -Branch "main" -Folder "Default/$selectedItem" -Destination $Game_Path -ZipFileName $steam_directory
 					
 					$old_txt = Get-Content -Path $Game_Path'\installed_mods_do-not-modify.txt'
 
@@ -174,7 +191,7 @@ if ($fileContent -ne $null) {
                     ""
                     Write-Host "Downloading mod file(s)..." -ForegroundColor Gray
 
-                    Download-GitHubFolder -Branch "main" -Folder "Mods/$selectedItem" -Destination $Game_Path
+                    Download-GitHubFolder -Branch "main" -Folder "Mods/$selectedItem" -Destination $Game_Path -ZipFileName $steam_directory
 
 					# Read and remove mod name from list
                     Add-Content -Path $Game_Path'\installed_mods_do-not-modify.txt' -Value $selectedItem
