@@ -81,19 +81,20 @@ function Download-GitHubFolder {
 		$ZipPath = $FolderPath + '\package.zip'
 		$NWPath = $FolderPath + '\package.nw'
 		$TempPath = $FolderPath + '\TEMP'
-		$extractedFolderPath = $FolderPath + 'ZipTEMP'
+		$extractedFolderPath = $FolderPath + '\ZipTEMP'
 		
 		Rename-Item -Path $NWPath -NewName 'package.zip'
 
 		Expand-Archive -Path $ZipPath -DestinationPath $extractedFolderPath -Force
 		
-		Copy-Item -Path "$TempPath\*" -Destination "$extractedFolderPath\*" -Recurse -Force
+		Copy-Item -Path "$TempPath\*" -Destination $extractedFolderPath -Recurse -Force
 		
 		Compress-Archive -Path "$extractedFolderPath\*" -DestinationPath $ZipPath -Force
 
 		Rename-Item -Path $ZipPath -NewName 'package.nw'
 		
-		Remove-Item $TempPath
+		Remove-Item $TempPath -Recurse -Force
+		Remove-Item $extractedFolderPath -Recurse -Force
     }
 
     function Download-File {
